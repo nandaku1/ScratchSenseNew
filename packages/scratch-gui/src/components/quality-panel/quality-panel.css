@@ -477,3 +477,107 @@
     white-space: nowrap;
     border: 0;
 }
+
+/* ── Study instrumentation ── */
+
+.session-timer {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.6rem;
+    color: #9ca3af;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    min-width: 32px;
+    text-align: right;
+}
+
+.participant-id-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 12px;
+    background: #fff;
+    border-bottom: 1px solid #e2e4ed;
+    flex-shrink: 0;
+}
+
+.participant-id-label {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.56rem;
+    font-weight: 600;
+    color: #9ca3af;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.participant-id-input {
+    flex: 1;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.65rem;
+    color: #1a1d2e;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 3px 6px;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.12s ease;
+    min-width: 0;
+}
+
+.participant-id-input:focus {
+    border-color: #4c97ff;
+    background: #fff;
+}
+
+.researcher-toolbar {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 4px 10px;
+    background: #fff;
+    border-bottom: 1px solid #e2e4ed;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.researcher-btn {
+    font-size: 0.58rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #6b7280;
+    transition: background 0.1s ease, color 0.1s ease;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.researcher-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.researcher-btn-danger {
+    color: #b91c1c;
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+.researcher-btn-danger:hover {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.session-banner {
+    background: #f0f9ff;
+    border-bottom: 1px solid #bae6fd;
+    padding: 5px 12px;
+    font-size: 0.62rem;
+    color: #0369a1;
+    line-height: 1.45;
+    flex-shrink: 0;
+}

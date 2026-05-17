@@ -206,6 +206,7 @@ const GUIComponent = props => {
         username,
         userOwnsProject,
         hideTutorialProjects,
+        enableQualityPanel,
         vm,
         ...componentProps
     } = omit(props, 'dispatch', 'setPlatform');
@@ -494,7 +495,7 @@ const GUIComponent = props => {
                                                 colorMode={colorMode}
                                             />
                                         </Box>
-                                        <QualityPanel vm={vm} />
+                                        {enableQualityPanel && <QualityPanel vm={vm} />}
                                     </Box>
                                     <ExtensionsButton
                                         intl={intl}
@@ -675,6 +676,7 @@ GUIComponent.propTypes = {
     username: PropTypes.string,
     userOwnsProject: PropTypes.bool,
     hideTutorialProjects: PropTypes.bool,
+    enableQualityPanel: PropTypes.bool,
     vm: PropTypes.instanceOf(VM).isRequired
 };
 
@@ -704,7 +706,8 @@ GUIComponent.defaultProps = {
     showComingSoon: false,
     showNewFeatureCallouts: false,
     stageSizeMode: STAGE_SIZE_MODES.large,
-    useExternalPeripheralList: false
+    useExternalPeripheralList: false,
+    enableQualityPanel: true
 };
 
 const mapStateToProps = state => ({

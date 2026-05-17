@@ -12,7 +12,18 @@ const DIMENSION_ICONS = {
     maintainability: '🔵',
 };
 
-const QualityPanel = ({findings, suggestions, llmLoading, onDescriptionChange}) => {
+const QualityPanel = ({
+    findings,
+    suggestions,
+    llmLoading,
+    participantId,
+    sessionLog,
+    sessionDuration,
+    onDescriptionChange,
+    onParticipantIdChange,
+    onExportLog,
+    onResetSession,
+}) => {
     const [activeDimension, setActiveDimension] = useState(null);
     const [showDialog, setShowDialog] = useState(false);
     const [description, setDescription] = useState('');
@@ -74,6 +85,7 @@ const QualityPanel = ({findings, suggestions, llmLoading, onDescriptionChange}) 
             <div className={styles['panel-header']}>
                 <span className={styles['panel-title']}>ScratchSense</span>
                 <div className={styles['header-actions']}>
+                    <span className={styles['session-timer']}>{sessionDuration}</span>
                     <div className={styles['describe-btn-wrapper']}>
                         <button
                             className={`${styles['describe-btn']}${description ? ` ${styles['describe-btn-active']}` : ''}`}
@@ -97,6 +109,38 @@ const QualityPanel = ({findings, suggestions, llmLoading, onDescriptionChange}) 
                     </span>
                 </div>
             </div>
+
+            {/* Participant ID bar */}
+            <div className={styles['participant-id-bar']}>
+                <span className={styles['participant-id-label']}>{'PID'}</span>
+                <input
+                    className={styles['participant-id-input']}
+                    type="text"
+                    value={participantId}
+                    onChange={e => onParticipantIdChange(e.target.value)}
+                    placeholder="P01"
+                    spellCheck={false}
+                    autoComplete="off"
+                />
+            </div>
+
+            {/* Researcher toolbar — only visible once session log has entries */}
+            {sessionLog.length > 0 && (
+                <div className={styles['researcher-toolbar']}>
+                    <button
+                        className={styles['researcher-btn']}
+                        onClick={onExportLog}
+                    >
+                        {'Export log'}
+                    </button>
+                    <button
+                        className={`${styles['researcher-btn']} ${styles['researcher-btn-danger']}`}
+                        onClick={onResetSession}
+                    >
+                        {'Reset session'}
+                    </button>
+                </div>
+            )}
 
             {/* Description dialog */}
             {showDialog && (
@@ -148,6 +192,13 @@ const QualityPanel = ({findings, suggestions, llmLoading, onDescriptionChange}) 
                     </div>
                 )}
             </div>
+
+            {/* Researcher reminder banner — shown until participant ID is entered */}
+            {!participantId && (
+                <div className={styles['session-banner']}>
+                    {'Enter a participant ID above before starting the session.'}
+                </div>
+            )}
 
             {/* Findings list */}
             <ul className={styles['findings-list']}>
@@ -212,7 +263,13 @@ QualityPanel.propTypes = {
     findings: PropTypes.array.isRequired,
     suggestions: PropTypes.array.isRequired,
     llmLoading: PropTypes.bool.isRequired,
+    participantId: PropTypes.string.isRequired,
+    sessionLog: PropTypes.array.isRequired,
+    sessionDuration: PropTypes.string.isRequired,
     onDescriptionChange: PropTypes.func,
+    onParticipantIdChange: PropTypes.func.isRequired,
+    onExportLog: PropTypes.func.isRequired,
+    onResetSession: PropTypes.func.isRequired,
 };
 
 QualityPanel.defaultProps = {

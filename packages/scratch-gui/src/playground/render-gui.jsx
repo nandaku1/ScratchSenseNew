@@ -64,6 +64,8 @@ export default appTarget => {
 
     const root = ReactDomClient.createRoot(appTarget);
 
+    const enableQualityPanel = process.env.ENABLE_QUALITY_PANEL !== 'false';
+
     root.render(
         // important: this is checking whether `simulateScratchDesktop` is truthy, not just defined!
         simulateScratchDesktop ?
@@ -72,6 +74,7 @@ export default appTarget => {
                 platform={PLATFORM.DESKTOP}
                 showTelemetryModal
                 canSave={false}
+                enableQualityPanel={enableQualityPanel}
                 onTelemetryModalCancel={handleTelemetryModalCancel}
                 onTelemetryModalOptIn={handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={handleTelemetryModalOptOut}
@@ -82,6 +85,7 @@ export default appTarget => {
                 showComingSoon
                 backpackHost={backpackHost}
                 canSave={false}
+                enableQualityPanel={enableQualityPanel}
                 onClickLogo={onClickLogo}
             />
     );
