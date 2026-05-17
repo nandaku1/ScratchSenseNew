@@ -14,6 +14,8 @@ Also look for these Scratch-specific patterns:
 - Multiple "ask and wait" blocks used in sequence without reading the answer in between. Each new ask discards the previous answer before it has been used.
 - Sprite position, costume, or visibility not reset on green flag in a project that clearly has a start state (e.g. the sprite moves or changes costume during play). Restarting the project would leave the sprite in a different state.
 - A broadcast used to trigger a response, but the receiving script also triggers another broadcast back, creating a potential loop or race condition.
+- A variable that appears to function as a score or counter (incremented in response to game events) but uses "set to" rather than "change by" inside the game loop — resetting the value on every iteration — or uses "change by" rather than "set to" at the green-flag initialisation point, causing the value to accumulate across restarts.
+- Touching-colour blocks used as collision detection mechanisms — flag if the colour selected is a common backdrop colour (white, black, blue) or if the block is used inside a game loop in a way that suggests it is the primary collision mechanism, noting that common background colours will cause false triggers.
 
 Do NOT flag: unreachable scripts (already flagged by static analysis), nesting depth, script length, naming conventions, or any purely structural issue that a linter would catch. Only flag issues a human educator would notice by reasoning about the code's intent.${descriptionContext}
 

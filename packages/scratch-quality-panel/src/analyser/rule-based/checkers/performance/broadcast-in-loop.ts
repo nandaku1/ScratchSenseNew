@@ -1,10 +1,8 @@
 // flags broadcast blocks inside tight loops with no wait (floods event queue)
 
 import { Finding, ScratchTarget } from '@types';
-import { BROADCAST_SEND_OPCODES, WAIT_OPCODE } from '@constants';
+import { BROADCAST_SEND_OPCODES, LOOP_OPCODES, WAIT_OPCODE } from '@constants';
 import { getInputBlockId, subtreeContainsOpcode } from '@utils/block-traversal';
-
-const LOOP_OPCODES = new Set(['control_forever', 'control_repeat']);
 
 export function checkBroadcastInLoop(target: ScratchTarget): Finding[] {
   const findings: Finding[] = [];
