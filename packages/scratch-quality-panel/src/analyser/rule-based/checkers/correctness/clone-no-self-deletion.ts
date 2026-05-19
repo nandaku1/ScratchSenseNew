@@ -1,4 +1,4 @@
-// per-sprite: flags clone-running sprites that never delete themselves
+// Flags sprites that respond to "when I start as a clone" but never call "delete this clone".
 
 import { Finding, ScratchTarget } from '@types';
 

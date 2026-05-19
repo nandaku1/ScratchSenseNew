@@ -1,4 +1,4 @@
-// flags broadcast blocks inside tight loops with no wait (floods event queue)
+// Flags broadcast blocks inside tight loops with no wait block (floods the event queue).
 
 import { Finding, ScratchTarget } from '@types';
 import { BROADCAST_SEND_OPCODES, LOOP_OPCODES, WAIT_OPCODE } from '@constants';

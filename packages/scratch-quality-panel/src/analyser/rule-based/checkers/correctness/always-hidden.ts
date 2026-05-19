@@ -1,4 +1,4 @@
-// flags sprites that hide themselves but never show (permanently invisible)
+// Flags sprites that hide themselves but never show (permanently invisible).
 
 import { Finding, ScratchTarget } from '@types';
 

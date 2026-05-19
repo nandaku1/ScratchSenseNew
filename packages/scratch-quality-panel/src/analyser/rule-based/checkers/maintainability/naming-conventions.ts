@@ -7,6 +7,8 @@ import {
   DEFAULT_SPRITE_NAME_REGEX,
 } from '@constants';
 
+// Searches ALL targets, not just the current sprite, because global variables are accessible
+// cross-sprite and may only be referenced in a different sprite's blocks.
 function getAllVarIdsInBlocks(targets: ScratchTarget[]): Set<string> {
   const ids = new Set<string>();
   for (const target of targets) {
