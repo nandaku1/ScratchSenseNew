@@ -304,11 +304,14 @@ function describeBlock(block: ScratchBlock, blocks: BlockMap): string {
   return op.replace(/_/g, ' ');
 }
 
+// visited guards against cycles — the sb3 format can produce mutually-referencing block IDs
+// in malformed or procedurally-generated projects, and shadow blocks have no serialisable body.
 function serialiseBlock(blockId: string, blocks: BlockMap, indent: string, visited: Set<string>): string {
   if (visited.has(blockId)) return '';
   visited.add(blockId);
 
   const block = blocks[blockId];
+  // Shadow blocks are opaque menu/argument values; they contribute to getInputValue but are not statements.
   if (!block || block.shadow) return '';
 
   const lines: string[] = [];

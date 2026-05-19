@@ -59,6 +59,8 @@ const QualityPanel = ({
         ? findings.filter(f => f.dimension === activeDimension)
         : findings;
 
+    // Groups identical findings across sprites into a single card with a count badge.
+    // Key on severity+source+description: same wording from multiple sprites is one logical issue.
     const grouped = DIMENSIONS.reduce((acc, dim) => {
         const dimFindings = filtered.filter(f => f.dimension === dim);
         const seen = new Map();

@@ -81,6 +81,7 @@ export class WorkspaceListener {
       this.debounceTimer = null;
       if (!this.config.anthropicApiKey) return;
 
+      // Skip serialisation entirely for empty projects — avoids sending a vacuous payload to the LLM.
       const hasAnyBlocks = project.targets.some((t) =>
         Object.values(t.blocks).some((b) => !b.shadow),
       );

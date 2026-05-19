@@ -38,6 +38,8 @@ export class AnalysisModule {
 
   runRuleBased(project: ScratchProject): Finding[] {
     const findings = runRuleBasedAnalysis(project);
+    // Stored on the instance so deduplication can reference it when the async LLM result
+    // arrives later — the two passes are temporally decoupled and share no other channel.
     this.lastRuleBasedFindings = findings;
     return findings;
   }

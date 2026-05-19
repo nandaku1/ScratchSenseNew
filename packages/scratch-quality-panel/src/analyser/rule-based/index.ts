@@ -74,6 +74,9 @@ export function runRuleBasedAnalysis(project: ScratchProject): Finding[] {
     );
   }
 
+  // Cross-target checkers run after the per-target loop because they need the complete
+  // targets array to reason across sprite boundaries (e.g. which broadcasts are received
+  // by any sprite, or whether any sprite defines an entry point at all).
   findings.push(
     ...checkRedundantBroadcasts(targets),
     ...checkClonesWithoutDeletion(targets),

@@ -100,6 +100,9 @@ export const GOD_SPRITE_SCRIPT_ERROR = 25;
 
 export const MAGIC_NUMBER_MIN_OCCURRENCES = 3;
 
+// Exempt: 0/1/-1 (initialisation), small counts (2–5), round educational numbers (10–100),
+// standard rotation angles (90/180/270/360), and stage boundary dimensions (240/180).
+// These appear so often in legitimate beginner projects that flagging them produces only noise.
 export const MAGIC_NUMBER_EXEMPT = new Set<number>([
   0, 1, -1, 2, 3, 4, 5, 10, 20, 50, 100, 90, -90, 180, -180, 270, -270, 360, -360, 240, -240,
 ]);

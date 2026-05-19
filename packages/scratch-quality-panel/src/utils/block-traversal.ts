@@ -47,6 +47,7 @@ export function countBlocksInSubtree(
     if (visited.has(id)) continue;
     visited.add(id);
     const block = blocks[id];
+    // Shadow blocks are visual-only menu/argument slots, not real code — exclude from count.
     if (!block || block.shadow) continue;
     count++;
     if (block.next) stack.push(block.next);
@@ -83,6 +84,9 @@ export function hasAncestorWithOpcode(
   return false;
 }
 
+// Returns the full set of block IDs reachable from startId. Unlike subtreeContainsOpcode,
+// which short-circuits on a match, this collects every ID — used when a checker needs to
+// exclude an entire subtree from subsequent traversal.
 export function collectSubtreeIds(
   startId: string,
   blocks: Record<string, ScratchBlock>,
