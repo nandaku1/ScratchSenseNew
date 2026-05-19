@@ -1,4 +1,4 @@
-// STAGE 10 — rule-based analyser orchestrator; runs all checkers and sorts by severity
+// Runs all rule-based checkers and sorts findings by severity (error → warning → info).
 
 import { Finding, ScratchProject } from '@types';
 

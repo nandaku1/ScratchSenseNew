@@ -1,4 +1,4 @@
-// STAGE 1 — shared TypeScript interfaces; all downstream code imports from here
+// Shared TypeScript interfaces for the quality panel; all downstream code imports from here.
 
 export interface Finding {
   dimension: 'correctness' | 'performance' | 'maintainability';

@@ -1,4 +1,4 @@
-// STAGE 8 — flags repeat-until with empty body (busy-wait that burns CPU)
+// Flags "repeat until" with an empty body — a busy-wait that spins without yielding.
 
 import { Finding, ScratchTarget } from '@types';
 import { getInputBlockId } from '@utils/block-traversal';

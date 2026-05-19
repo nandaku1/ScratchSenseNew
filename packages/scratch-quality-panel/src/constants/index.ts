@@ -1,4 +1,4 @@
-// STAGE 2 — opcode sets, thresholds, and labels used by all checkers
+// Opcode sets, thresholds, and labels shared across all checkers.
 
 export const HAT_OPCODES = new Set<string>([
   'event_whenflagclicked',

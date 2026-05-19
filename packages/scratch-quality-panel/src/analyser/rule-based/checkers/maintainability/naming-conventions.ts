@@ -1,4 +1,4 @@
-// STAGE 9 — flags poor variable names, default sprite names, and unused variables
+// Flags generic/single-letter variable names, default sprite names, and declared-but-unused variables.
 
 import { Finding, ScratchTarget } from '@types';
 import {

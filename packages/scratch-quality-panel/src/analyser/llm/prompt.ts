@@ -1,4 +1,4 @@
-// STAGE 12 — system and user prompt builders for LLM analysis
+// System and user prompt builders for LLM analysis.
 
 export function buildSystemPrompt(projectDescription?: string): string {
   const descriptionContext = projectDescription

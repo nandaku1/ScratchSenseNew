@@ -1,4 +1,4 @@
-// STAGE 13 — AnalysisModule: orchestrator combining rule-based and LLM analysis with deduplication
+// Combines rule-based and LLM analysis; deduplicates LLM findings that overlap with rule findings.
 
 import { Finding, Suggestion, ScratchProject, AnalysisConfig } from '@types';
 import { LLM_FINDING_SIMILARITY_THRESHOLD } from '@constants';
@@ -13,6 +13,8 @@ function jaccardSimilarity(a: string, b: string): number {
   return union === 0 ? 0 : intersection / union;
 }
 
+// Drops LLM findings whose description overlaps with an existing rule finding on the same sprite+dimension.
+// Threshold 0.75: low enough to catch paraphrases, high enough not to suppress distinct LLM insights.
 function deduplicateLLMFindings(llmFindings: Finding[], ruleFindings: Finding[]): Finding[] {
   return llmFindings.filter(
     (llm) =>

@@ -1,4 +1,4 @@
-// STAGE 5 — detects forever loops that block the sprite or yield but never end
+// Flags forever loops that are empty (blocks sprite entirely), have no stop block, or have no wait/stop.
 
 import { Finding, ScratchTarget } from '@types';
 import { FOREVER_OPCODE, STOP_OPCODE, WAIT_OPCODE } from '@constants';

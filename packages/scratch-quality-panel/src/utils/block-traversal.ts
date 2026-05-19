@@ -1,4 +1,4 @@
-// STAGE 3 — pure block traversal helpers shared by multiple checkers
+// Block traversal helpers shared across checkers.
 
 import { ScratchBlock, ScratchTarget } from '@types';
 import { HAT_OPCODES } from '@constants';
@@ -11,6 +11,7 @@ export function getInputBlockId(block: ScratchBlock, inputName: string): string 
   return null;
 }
 
+// Iterative DFS (not recursive) to avoid call-stack overflow on deeply nested or large projects.
 export function subtreeContainsOpcode(
   startBlockId: string,
   blocks: Record<string, ScratchBlock>,

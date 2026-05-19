@@ -1,4 +1,4 @@
-// STAGE 11 — BlockSerialiser: converts sb3 block graph to human-readable pseudocode for LLM analysis
+// Converts the sb3 block graph to human-readable pseudocode for LLM input.
 
 import { ScratchProject, ScratchTarget, ScratchBlock } from '@types';
 
@@ -93,7 +93,6 @@ function describeBlock(block: ScratchBlock, blocks: BlockMap): string {
     const sprite = getInputValue(block, 'CLONE_OPTION', blocks);
     return `create clone of [${sprite}]`;
   }
-  if (op === 'control_start_as_clone') return 'when I start as a clone';
   if (op === 'control_delete_this_clone') return 'delete this clone';
 
   // Motion
@@ -115,6 +114,11 @@ function describeBlock(block: ScratchBlock, blocks: BlockMap): string {
     return `go to x: (${x}) y: (${y})`;
   }
   if (op === 'motion_glideto') {
+    const secs = getInputValue(block, 'SECS', blocks);
+    const to = getInputValue(block, 'TO', blocks);
+    return `glide (${secs}) secs to [${to}]`;
+  }
+  if (op === 'motion_glidesecstoxy') {
     const secs = getInputValue(block, 'SECS', blocks);
     const x = getInputValue(block, 'X', blocks);
     const y = getInputValue(block, 'Y', blocks);

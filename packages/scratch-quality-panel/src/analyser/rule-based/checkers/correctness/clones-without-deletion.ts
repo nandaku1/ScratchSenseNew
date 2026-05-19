@@ -1,4 +1,4 @@
-// STAGE 6 — cross-sprite: flags targets that create clones but never delete them
+// Cross-sprite: flags any project that creates clones but has no delete-this-clone block anywhere.
 
 import { Finding, ScratchTarget } from '@types';
 

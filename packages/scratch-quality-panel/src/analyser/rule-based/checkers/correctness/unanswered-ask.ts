@@ -1,4 +1,4 @@
-// STAGE 7 — cross-sprite: warns when ask-and-wait is used but answer is never read
+// Cross-sprite: warns when ask-and-wait is used but the answer reporter is never read.
 
 import { Finding, ScratchTarget } from '@types';
 

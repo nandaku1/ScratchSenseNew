@@ -1,4 +1,4 @@
-// STAGE 9 — flags sprites with too many top-level scripts (god-sprite anti-pattern)
+// Flags sprites with too many top-level hat scripts — the "god sprite" anti-pattern.
 
 import { Finding, ScratchTarget } from '@types';
 import { GOD_SPRITE_SCRIPT_WARNING, GOD_SPRITE_SCRIPT_ERROR } from '@constants';

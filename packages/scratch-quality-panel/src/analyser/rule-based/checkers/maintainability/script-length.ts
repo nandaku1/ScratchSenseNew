@@ -1,4 +1,4 @@
-// STAGE 9 — flags hat scripts that are too long to read and maintain
+// Flags hat scripts whose block count exceeds the warning/error thresholds defined in constants.
 
 import { Finding, ScratchTarget } from '@types';
 import { SCRIPT_LENGTH_WARNING, SCRIPT_LENGTH_ERROR } from '@constants';

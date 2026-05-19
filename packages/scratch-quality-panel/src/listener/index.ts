@@ -1,4 +1,5 @@
-// STAGE 14 — WorkspaceListener: VM event wiring with rule-based immediate analysis and LLM debounce
+// Wires VM events to analysis. Rule-based runs synchronously on every change (cheap, <10 ms);
+// LLM runs debounced (default 2 s) because it is async and costly.
 
 import { Finding, Suggestion, ScratchVMLike, ScratchProject, AnalysisConfig } from '@types';
 import { AnalysisModule } from '../analyser/index';

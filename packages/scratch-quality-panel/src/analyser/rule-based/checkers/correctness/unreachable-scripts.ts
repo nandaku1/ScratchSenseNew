@@ -1,4 +1,4 @@
-// STAGE 5 — flags topLevel non-hat, non-shadow blocks that can never run
+// Flags top-level non-hat, non-shadow blocks — scripts disconnected from any trigger that can never run.
 
 import { Finding, ScratchTarget } from '@types';
 import { HAT_OPCODES } from '@constants';

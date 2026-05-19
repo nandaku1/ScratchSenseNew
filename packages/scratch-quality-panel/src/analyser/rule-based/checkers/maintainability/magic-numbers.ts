@@ -1,4 +1,4 @@
-// STAGE 9 — flags literal numbers repeated 3+ times (should be named variables)
+// Flags literal numbers repeated 3+ times across a target's blocks (excluding exempt values).
 
 import { Finding, ScratchTarget } from '@types';
 import { MAGIC_NUMBER_MIN_OCCURRENCES, MAGIC_NUMBER_EXEMPT } from '@constants';

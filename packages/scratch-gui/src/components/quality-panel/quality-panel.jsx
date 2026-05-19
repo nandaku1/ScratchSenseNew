@@ -1,4 +1,4 @@
-// STAGE 19 — QualityPanel UI component: dimension filters, API key bar, findings list
+// Presentational component for the ScratchSense quality panel.
 
 import React, {useState, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';

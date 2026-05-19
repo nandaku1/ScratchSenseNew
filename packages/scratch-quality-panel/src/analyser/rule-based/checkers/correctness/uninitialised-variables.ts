@@ -1,4 +1,5 @@
-// STAGE 6 — flags variables read in blocks but never written within the same target
+// Flags variables read but never written within the same target.
+// Tracks by variable ID (field[1]), not name, so two sprites can share a name without false positives.
 
 import { Finding, ScratchTarget } from '@types';
 import { VARIABLE_WRITE_OPCODES, VARIABLE_READ_OPCODES } from '@constants';

@@ -1,4 +1,4 @@
-// STAGE 7 — flags say-for-secs / think-for-secs with literal 0 duration (invisible to user)
+// Flags say-for-secs / think-for-secs with a literal 0 duration — the bubble appears and vanishes instantly.
 
 import { Finding, ScratchTarget } from '@types';
 

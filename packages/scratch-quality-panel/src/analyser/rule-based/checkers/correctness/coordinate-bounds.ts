@@ -1,4 +1,4 @@
-// STAGE 7 — flags literal coordinates outside the 480×360 stage bounds
+// Flags literal coordinates outside the 480×360 stage bounds — sprite would be placed off-screen.
 
 import { Finding, ScratchTarget } from '@types';
 import { STAGE_X_MAX, STAGE_Y_MAX } from '@constants';

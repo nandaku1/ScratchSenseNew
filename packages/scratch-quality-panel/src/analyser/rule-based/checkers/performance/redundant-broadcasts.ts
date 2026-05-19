@@ -1,4 +1,4 @@
-// STAGE 8 — cross-sprite: flags broadcasts sent but never received and vice versa
+// Cross-sprite: flags broadcasts sent with no matching receiver, and receivers with no matching send.
 
 import { Finding, ScratchBlock, ScratchTarget } from '@types';
 import { BROADCAST_SEND_OPCODES, BROADCAST_RECEIVE_OPCODE } from '@constants';

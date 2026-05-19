@@ -1,4 +1,4 @@
-// STAGE 16 — Redux reducer for ScratchSense quality panel state
+// Redux slice for ScratchSense quality panel state (findings, LLM status, session log, participant ID).
 
 const SET_FINDINGS = 'scratch-gui/quality-panel/SET_FINDINGS';
 const SET_LLM_LOADING = 'scratch-gui/quality-panel/SET_LLM_LOADING';

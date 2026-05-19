@@ -1,7 +1,5 @@
-// STAGE 9 — flags custom block definitions that are never called (and calls with no definition)
-//
-// "Call without definition" pattern added per:
-//   Frädrich et al. (2020) "Common Bugs in Scratch Programs" (164 projects)
+// Flags custom-block definitions never called, and calls with no matching definition.
+// Frädrich et al. (2020) "Common Bugs in Scratch Programs" — 164 projects (call without definition).
 
 import { Finding, ScratchTarget } from '@types';
 

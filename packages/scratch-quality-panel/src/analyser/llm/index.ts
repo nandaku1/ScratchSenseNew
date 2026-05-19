@@ -1,4 +1,4 @@
-// STAGE 12 — LLM analysis layer: calls Anthropic claude-haiku-4-5 with prompt caching and backoff
+// LLM analysis layer: Anthropic claude-haiku-4-5 with prompt caching, abort support, and retry backoff.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Finding, Suggestion } from '@types';
@@ -84,6 +84,8 @@ export async function runLLMAnalysis(
   signal?: AbortSignal,
 ): Promise<LLMResult> {
   const empty: LLMResult = { findings: [], suggestions: [] };
+  // dangerouslyAllowBrowser: the SDK blocks browser use by default to deter credential exposure;
+  // here the key is intentionally provided by the researcher who runs the study server.
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 
   let rawText: string;

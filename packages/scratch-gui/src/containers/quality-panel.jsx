@@ -1,4 +1,4 @@
-// STAGE 17 — QualityPanel container: VM wiring + Redux connect
+// Container: wires the VM-based WorkspaceListener to Redux state and owns session lifecycle.
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -53,6 +53,7 @@ class QualityPanel extends React.Component {
 
     attachListener (vm) {
         this._vm = vm;
+        // Dynamic import keeps the LLM/analysis bundle out of the main chunk when the panel is disabled.
         import('@scratch/scratch-quality-panel').then(({WorkspaceListener}) => {
             this.listener = new WorkspaceListener({
                 anthropicApiKey: process.env.ANTHROPIC_API_KEY || undefined,
@@ -115,6 +116,7 @@ class QualityPanel extends React.Component {
         this.props.onSetSuggestions(suggestions);
         const loading = Boolean(process.env.ANTHROPIC_API_KEY) && !llmDone;
         this.props.onSetLLMLoading(loading);
+        // Log every dispatch (both rule-based and LLM passes) so researchers can reconstruct the timeline.
         this.props.onAppendSessionLog({
             timestamp_ms: Date.now() - this.sessionStartTime,
             wall_clock: new Date().toISOString(),

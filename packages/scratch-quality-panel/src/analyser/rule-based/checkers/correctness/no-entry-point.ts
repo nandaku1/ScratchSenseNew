@@ -1,4 +1,4 @@
-// STAGE 7 — cross-sprite: warns when no green flag hat exists in the entire project
+// Cross-sprite: warns when no green flag hat exists anywhere in the project.
 
 import { Finding, ScratchTarget } from '@types';
 

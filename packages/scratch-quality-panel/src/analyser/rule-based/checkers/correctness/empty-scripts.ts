@@ -1,4 +1,4 @@
-// STAGE 5 — flags hat blocks with no body (next === null)
+// Flags hat blocks with no body (next === null) — triggers that do nothing when fired.
 
 import { Finding, ScratchTarget } from '@types';
 import { HAT_OPCODES, OPCODE_LABELS } from '@constants';

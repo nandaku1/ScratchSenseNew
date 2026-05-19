@@ -1,4 +1,5 @@
-// STAGE 8 — flags deeply nested control blocks; detects nested-repeat products
+// Flags scripts where control blocks nest beyond threshold.
+// Pure nested-repeat chains get a dedicated message showing the total iteration product (e.g. 3×3×3 = 27).
 
 import { Finding, ScratchBlock, ScratchTarget } from '@types';
 import { CONTROL_OPCODES, NESTING_DEPTH_WARNING, NESTING_DEPTH_ERROR } from '@constants';

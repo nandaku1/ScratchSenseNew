@@ -1,4 +1,5 @@
-// STAGE 6 — flags multiple identical hat block triggers on the same sprite
+// Flags multiple identical hat triggers on the same sprite.
+// Field values are sorted and included in the key so "receive A" and "receive B" are treated as distinct.
 
 import { Finding, ScratchTarget } from '@types';
 import { HAT_OPCODES, OPCODE_LABELS } from '@constants';

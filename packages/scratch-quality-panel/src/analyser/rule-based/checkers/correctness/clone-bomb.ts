@@ -1,4 +1,4 @@
-// STAGE 6 — flags create-clone calls inside start-as-clone scripts (exponential clone creation)
+// Flags create-clone calls inside a start-as-clone script — each new clone spawns more, growing exponentially.
 
 import { Finding, ScratchTarget } from '@types';
 import { subtreeContainsOpcode } from '@utils/block-traversal';

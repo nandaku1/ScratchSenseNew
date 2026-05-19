@@ -1,4 +1,4 @@
-// STAGE 15 — public API re-exports for @scratch/scratch-quality-panel
+// Public API re-exports for @scratch/scratch-quality-panel.
 
 export type { Finding, Suggestion, ScratchProject, ScratchTarget, ScratchBlock, AnalysisConfig } from '@types';
 export { WorkspaceListener } from './listener/index';
