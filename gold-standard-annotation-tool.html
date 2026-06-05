@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScratchSense Gold Standard Annotation Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!--
+        All ScratchSense rule-based analysis logic is embedded below as vanilla JavaScript.
+        No build step required — the analysis runs entirely in the browser.
+    -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f6fa;
+            padding: 20px;
+            color: #1a1d2e;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ─────────── HEADER ─────────── */
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1d2e;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* ─────────── SESSION HISTORY ─────────── */
+
+        .session-history {
+            margin-bottom: 30px;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .session-history.show {
+            display: block;
+        }
+
+        .session-history h3 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .session-history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .history-item {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: #e5e7eb;
+        }
+
+        .history-item-name {
+            font-weight: 500;
+            color: #1a1d2e;
+        }
+
+        .history-item-count {
+            color: #6b7280;
+            margin-left: 6px;
+        }
+
+        /* ─────────── FILE INPUT REGION ─────────── */
+
+        .file-input-region {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .file-input-region.hidden {
+            display: none;
+        }
+
+        .dropzone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .dropzone:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .dropzone.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .dropzone-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .dropzone h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1d2e;
+            margin-bottom: 8px;
+        }
+
+        .dropzone p {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .browse-button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .browse-button:hover {
+            background: #2563eb;
+        }
+
+        .file-selected {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            display: none;
+        }
+
+        .file-selected.show {
+            display: block;
+        }
+
+        .file-info {
+            background: #f9fafb;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            color: #1a1d2e;
+            word-break: break-all;
+        }
+
+        .file-info-size {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .analyse-button {
+            background: #10b981;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .analyse-button:hover {
+            background: #059669;
+        }
+
+        .analyse-button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .clear-button {
+            background: #e5e7eb;
+            color: #1a1d2e;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .clear-button:hover {
+            background: #d1d5db;
+        }
+
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-indicator.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* ─────────── ERROR MESSAGES ─────────── */
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-icon {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        /* ─────────── SCORE SUMMARY ─────────── */
+
+        .score-summary {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .score-summary.show {
+            display: block;
+        }
+
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card.correctness {
+            border-left: 4px solid #ef4444;
+        }
+
+        .metric-card.performance {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .metric-card.maintainability {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .metric-card.total {
+            border-left: 4px solid #6b7280;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1d2e;
+        }
+
+        .metric-card.correctness .metric-value {
+            color: #ef4444;
+        }
+
+        .metric-card.performance .metric-value {
+            color: #f59e0b;
+        }
+
+        .metric-card.maintainability .metric-value {
+            color: #3b82f6;
+        }
+
+        .stacked-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 16px;
+        }
+
+        .stacked-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .segment-correctness {
+            background: #ef4444;
+        }
+
+        .segment-performance {
+            background: #f59e0b;
+        }
+
+        .segment-maintainability {
+            background: #3b82f6;
+        }
+
+        .no-issues-banner {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        /* ─────────── FINDINGS TABLE ─────────── */
+
+        .findings-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .findings-section.show {
+            display: block;
+        }
+
+        .findings-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .findings-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-button {
+            padding: 8px 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .filter-button:hover {
+            border-color: #9ca3af;
+        }
+
+        .filter-button.active {
+            background: #1a1d2e;
+            color: white;
+            border-color: #1a1d2e;
+        }
+
+        .filter-button.correctness.active {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .filter-button.performance.active {
+            background: #f59e0b;
+            border-color: #f59e0b;
+        }
+
+        .filter-button.maintainability.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .filter-count {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-left: 6px;
+        }
+
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .findings-table thead th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .findings-table tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .findings-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .findings-table tbody tr {
+            border-left: 3px solid #d1d5db;
+        }
+
+        .findings-table tbody tr.error {
+            border-left-color: #ef4444;
+        }
+
+        .findings-table tbody tr.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .findings-table tbody tr.info {
+            border-left-color: #3b82f6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.correctness {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .badge.performance {
+            background: #fffbeb;
+            color: #78350f;
+        }
+
+        .badge.maintainability {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        .checker-name {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #374151;
+        }
+
+        .no-findings {
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .no-findings-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .no-findings-text {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .pagination-info {
+            padding: 12px 16px;
+            background: #f9fafb;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* ─────────── EXPORT SECTION ─────────── */
+
+        .export-section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .export-section.show {
+            display: block;
+        }
+
+        .export-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-button {
+            padding: 12px 20px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .export-button:hover {
+            border-color: #9ca3af;
+            background: #f9fafb;
+        }
+
+        .export-button.primary {
+            background: #1a1d2e;
+            color: white;
+            border-color: #1a1d2e;
+        }
+
+        .export-button.primary:hover {
+            background: #374151;
+            border-color: #374151;
+        }
+
+        .copy-feedback {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* ─────────── ACTION BUTTONS ─────────── */
+
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .action-buttons button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        .another-file-button {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .another-file-button:hover {
+            background: #2563eb;
+        }
+
+        /* ─────────── HOW TO USE SECTION ─────────── */
+
+        .help-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-top: 40px;
+        }
+
+        .help-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .help-toggle:hover {
+            color: #3b82f6;
+        }
+
+        .help-toggle-icon {
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .help-toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .help-content {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .help-content.show {
+            display: block;
+        }
+
+        .help-content h4 {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            color: #1a1d2e;
+        }
+
+        .help-content p {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .help-content ul {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .help-content li {
+            margin-bottom: 8px;
+        }
+
+        .code-block {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #374151;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+    </style>
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // SCRATCHSENSE RULE-BASED ANALYSIS ENGINE — VANILLA JAVASCRIPT
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // Rewritten from TypeScript; no external dependencies except JSZip.
+        // Exports: window.runRuleBasedAnalysis(project) → Finding[]
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // CONSTANTS
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        const CONSTANTS = {
+            HAT_OPCODES: new Set([
+                'event_whenflagclicked',
+                'event_whenkeypressed',
+                'event_whenthisspriteclicked',
+                'event_whenstageclicked',
+                'event_whenbackdropswitchesto',
+                'event_whengreaterthan',
+                'event_whenbroadcastreceived',
+                'control_start_as_clone',
+                'procedures_definition',
+            ]),
+            CONTROL_OPCODES: new Set([
+                'control_if',
+                'control_if_else',
+                'control_repeat',
+                'control_repeat_until',
+                'control_forever',
+                'control_wait',
+                'control_wait_until',
+                'control_for_each',
+            ]),
+            LOOP_OPCODES: new Set([
+                'control_forever',
+                'control_repeat',
+                'control_repeat_until',
+                'control_for_each',
+            ]),
+            MOTION_OPCODES: new Set([
+                'motion_movesteps',
+                'motion_turnright',
+                'motion_turnleft',
+                'motion_goto',
+                'motion_gotoxy',
+                'motion_glideto',
+                'motion_glidesecstoxy',
+                'motion_pointindirection',
+                'motion_pointtowards',
+                'motion_changexby',
+                'motion_setx',
+                'motion_changeyby',
+                'motion_sety',
+                'motion_ifonedgebounce',
+                'motion_setrotationstyle',
+            ]),
+            FOREVER_OPCODE: 'control_forever',
+            STOP_OPCODE: 'control_stop',
+            WAIT_OPCODE: 'control_wait',
+            VARIABLE_WRITE_OPCODES: new Set([
+                'data_setvariableto',
+                'data_changevariableby',
+            ]),
+            VARIABLE_READ_OPCODES: new Set(['data_variable']),
+            BROADCAST_SEND_OPCODES: new Set([
+                'event_broadcast',
+                'event_broadcastandwait',
+            ]),
+            BROADCAST_RECEIVE_OPCODE: 'event_whenbroadcastreceived',
+            NESTING_DEPTH_WARNING: 3,
+            NESTING_DEPTH_ERROR: 5,
+            SCRIPT_LENGTH_WARNING: 20,
+            SCRIPT_LENGTH_ERROR: 40,
+            POOR_VARIABLE_NAMES: new Set([
+                'my variable',
+                'var',
+                'data',
+                'thing',
+                'stuff',
+                'item',
+                'value',
+                'number',
+                'text',
+                'result',
+                'temp',
+                'tmp',
+            ]),
+            SINGLE_LETTER_BAD_REGEX: /^[a-wA-W]$/,
+            DEFAULT_SPRITE_NAME_REGEX: /^(Sprite|Actor|Cat)\d*$/i,
+            STAGE_X_MAX: 240,
+            STAGE_Y_MAX: 180,
+            GOD_SPRITE_SCRIPT_WARNING: 15,
+            GOD_SPRITE_SCRIPT_ERROR: 25,
+            MAGIC_NUMBER_MIN_OCCURRENCES: 3,
+            MAGIC_NUMBER_EXEMPT: new Set([
+                0, 1, -1, 2, 3, 4, 5, 10, 20, 50, 100, 90, -90, 180, -180, 270, -270, 360, -360, 240, -240,
+            ]),
+            OPCODE_LABELS: {
+                event_whenflagclicked: 'when green flag clicked',
+                event_whenkeypressed: 'when key pressed',
+                event_whenthisspriteclicked: 'when this sprite clicked',
+                event_whenstageclicked: 'when stage clicked',
+                event_whenbackdropswitchesto: 'when backdrop switches to',
+                event_whengreaterthan: 'when loudness/timer greater than',
+                event_whenbroadcastreceived: 'when I receive',
+                control_start_as_clone: 'when I start as a clone',
+                procedures_definition: 'define (custom block)',
+                control_forever: 'forever',
+                control_if: 'if',
+                control_if_else: 'if/else',
+                control_repeat: 'repeat',
+                control_repeat_until: 'repeat until',
+                control_wait: 'wait',
+                control_wait_until: 'wait until',
+                data_setvariableto: 'set variable to',
+                data_changevariableby: 'change variable by',
+                control_stop: 'stop',
+            },
+        };
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // BLOCK TRAVERSAL UTILITIES
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        function getInputBlockId(block, inputName) {
+            const input = block.inputs[inputName];
+            if (!input) return null;
+            const ref = input[1];
+            if (typeof ref === 'string') return ref;
+            return null;
+        }
+
+        function subtreeContainsOpcode(startBlockId, blocks, targetOpcodes) {
+            const visited = new Set();
+            const stack = [startBlockId];
+            while (stack.length > 0) {
+                const id = stack.pop();
+                if (visited.has(id)) continue;
+                visited.add(id);
+                const block = blocks[id];
+                if (!block) continue;
+                if (targetOpcodes.has(block.opcode)) return true;
+                if (block.next) stack.push(block.next);
+                for (const inputName of Object.keys(block.inputs)) {
+                    const childId = getInputBlockId(block, inputName);
+                    if (childId) stack.push(childId);
+                }
+            }
+            return false;
+        }
+
+        function countBlocksInSubtree(startBlockId, blocks) {
+            const visited = new Set();
+            const stack = [startBlockId];
+            let count = 0;
+            while (stack.length > 0) {
+                const id = stack.pop();
+                if (visited.has(id)) continue;
+                visited.add(id);
+                const block = blocks[id];
+                if (!block || block.shadow) continue;
+                count++;
+                if (block.next) stack.push(block.next);
+                for (const inputName of Object.keys(block.inputs)) {
+                    const childId = getInputBlockId(block, inputName);
+                    if (childId) stack.push(childId);
+                }
+            }
+            return count;
+        }
+
+        function hasAncestorWithOpcode(blockId, blocks, targetOpcodes) {
+            const block = blocks[blockId];
+            if (!block) return false;
+            let parentId = block.parent;
+            while (parentId) {
+                const parent = blocks[parentId];
+                if (!parent) break;
+                if (targetOpcodes.has(parent.opcode)) return true;
+                parentId = parent.parent;
+            }
+            return false;
+        }
+
+        function getAllTopLevelHatIds(blocks) {
+            const ids = [];
+            for (const [id, block] of Object.entries(blocks)) {
+                if (block.topLevel && !block.shadow && CONSTANTS.HAT_OPCODES.has(block.opcode)) {
+                    ids.push(id);
+                }
+            }
+            return ids;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // CORRECTNESS CHECKERS
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        function checkUnreachableScripts(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.topLevel && !block.shadow && !CONSTANTS.HAT_OPCODES.has(block.opcode)) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'error',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Script Without a Trigger',
+                        description: 'This script has no hat block and can never run.',
+                        fix: 'Attach a "when green flag clicked" or other event trigger to it.',
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkEmptyScripts(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.topLevel && !block.shadow && CONSTANTS.HAT_OPCODES.has(block.opcode) && block.next === null) {
+                    const label = CONSTANTS.OPCODE_LABELS[block.opcode] || block.opcode;
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Empty "${label}" Script`,
+                        description: `This "${label}" script has no blocks inside it and will do nothing.`,
+                        fix: `Add blocks inside it or remove the script.`,
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkInfiniteLoops(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== CONSTANTS.FOREVER_OPCODE) continue;
+                const substackId = getInputBlockId(block, 'SUBSTACK');
+                if (!substackId) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'error',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Empty Forever Loop',
+                        description: 'A forever loop with no blocks and no stop or wait will block the sprite entirely.',
+                        fix: 'Add blocks inside it or remove the loop.',
+                        blockId: id,
+                    });
+                    continue;
+                }
+                const hasStop = subtreeContainsOpcode(substackId, target.blocks, new Set([CONSTANTS.STOP_OPCODE]));
+                if (hasStop) continue;
+                const hasWait = subtreeContainsOpcode(substackId, target.blocks, new Set([CONSTANTS.WAIT_OPCODE]));
+                if (hasWait) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Endless Forever Loop',
+                        description: 'This forever loop pauses with wait blocks but has no stop block, so it runs forever.',
+                        fix: 'Add a stop block if the loop should end.',
+                        blockId: id,
+                    });
+                } else {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'error',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Blocking Forever Loop',
+                        description: 'A forever loop with no stop or wait will freeze the sprite entirely.',
+                        fix: 'Add a wait or stop block inside it.',
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkUninitialisedVariables(target) {
+            const findings = [];
+            const writtenVarIds = new Set();
+            const readVarIds = new Set();
+
+            for (const block of Object.values(target.blocks)) {
+                if (CONSTANTS.VARIABLE_WRITE_OPCODES.has(block.opcode)) {
+                    const field = block.fields['VARIABLE'];
+                    if (field?.[1]) writtenVarIds.add(field[1]);
+                }
+                if (CONSTANTS.VARIABLE_READ_OPCODES.has(block.opcode)) {
+                    const field = block.fields['VARIABLE'];
+                    if (field?.[1]) readVarIds.add(field[1]);
+                }
+            }
+
+            for (const [varId, varNameTuple] of Object.entries(target.variables)) {
+                const varName = varNameTuple[0];
+                if (readVarIds.has(varId) && !writtenVarIds.has(varId)) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Uninitialised Variable "${varName}"`,
+                        description: `"${varName}" is read but never given a value first, so it may always contain its default (0 or empty).`,
+                        fix: `Set it to an initial value before using it.`,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkWriteOnlyVariables(target) {
+            const findings = [];
+            const writtenVarIds = new Set();
+            const readVarIds = new Set();
+
+            for (const block of Object.values(target.blocks)) {
+                if (CONSTANTS.VARIABLE_WRITE_OPCODES.has(block.opcode)) {
+                    const field = block.fields['VARIABLE'];
+                    if (field?.[1]) writtenVarIds.add(field[1]);
+                }
+                if (CONSTANTS.VARIABLE_READ_OPCODES.has(block.opcode)) {
+                    const field = block.fields['VARIABLE'];
+                    if (field?.[1]) readVarIds.add(field[1]);
+                }
+            }
+
+            for (const [varId, varNameTuple] of Object.entries(target.variables)) {
+                const varName = varNameTuple[0];
+                if (writtenVarIds.has(varId) && !readVarIds.has(varId)) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Write-Only Variable "${varName}"`,
+                        description: `This variable is written to but never read, so the stored value has no effect on the project.`,
+                        fix: `Read it somewhere or remove it.`,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkDuplicateHatTriggers(target) {
+            const findings = [];
+            const seen = new Map();
+
+            const hatKey = (block) => {
+                const fieldStr = Object.entries(block.fields)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([, [v]]) => v)
+                    .join('|');
+                return `${block.opcode}::${fieldStr}`;
+            };
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!block.topLevel || block.shadow || !CONSTANTS.HAT_OPCODES.has(block.opcode)) continue;
+                const key = hatKey(block);
+                if (seen.has(key)) {
+                    const label = CONSTANTS.OPCODE_LABELS[block.opcode] || block.opcode;
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Duplicate "${label}" Trigger`,
+                        description: `Multiple "${label}" scripts share this trigger. In Scratch, only one runs per event, so the others may be silently ignored.`,
+                        fix: `Merge them into one script or remove the duplicate.`,
+                        blockId: id,
+                    });
+                } else {
+                    seen.set(key, id);
+                }
+            }
+            return findings;
+        }
+
+        function checkCloneBomb(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'control_start_as_clone' || !block.topLevel) continue;
+                if (block.next && subtreeContainsOpcode(block.next, target.blocks, new Set(['control_create_clone_of']))) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'error',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Exponential Clone Growth',
+                        description: 'Each new clone creates even more clones, growing exponentially until the project crashes.',
+                        fix: 'Remove the "create clone" block from inside clone scripts.',
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkCoordinateBounds(target) {
+            const findings = [];
+            const COORD_OPCODES = {
+                motion_gotoxy: [
+                    { input: 'X', max: CONSTANTS.STAGE_X_MAX, axis: 'X' },
+                    { input: 'Y', max: CONSTANTS.STAGE_Y_MAX, axis: 'Y' },
+                ],
+                motion_setx: [{ input: 'X', max: CONSTANTS.STAGE_X_MAX, axis: 'X' }],
+                motion_sety: [{ input: 'Y', max: CONSTANTS.STAGE_Y_MAX, axis: 'Y' }],
+            };
+
+            const getLiteralNumber = (block, inputName) => {
+                const input = block.inputs[inputName];
+                if (!input) return null;
+                const ref = input[1];
+                if (Array.isArray(ref) && ref[0] === 4 && typeof ref[1] === 'string') {
+                    const n = parseFloat(ref[1]);
+                    return isNaN(n) ? null : n;
+                }
+                return null;
+            };
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                const checks = COORD_OPCODES[block.opcode];
+                if (!checks) continue;
+                for (const { input, max, axis } of checks) {
+                    const val = getLiteralNumber(block, input);
+                    if (val !== null && Math.abs(val) > max) {
+                        findings.push({
+                            dimension: 'correctness',
+                            severity: 'warning',
+                            source: 'rule-based',
+                            sprite: target.name,
+                            title: `Out-of-Bounds ${axis} Coordinate`,
+                            description: `${axis} = ${val} is outside the stage boundary (±${max}), placing the sprite off-screen where it cannot be seen.`,
+                            fix: `Use a value between -${max} and ${max}.`,
+                            blockId: id,
+                        });
+                    }
+                }
+            }
+            return findings;
+        }
+
+        function checkZeroDurationSay(target) {
+            const findings = [];
+            const SAY_OPCODES = new Set(['looks_sayforsecs', 'looks_thinkforsecs']);
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!SAY_OPCODES.has(block.opcode)) continue;
+                const secsInput = block.inputs['SECS'];
+                if (!secsInput) continue;
+                const ref = secsInput[1];
+                if (Array.isArray(ref) && ref[0] === 4 && ref[1] === '0') {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Invisible Say/Think Block',
+                        description: 'A say/think for 0 seconds block flashes too fast to be seen.',
+                        fix: 'Increase the duration or use a plain "say" block instead.',
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkStutteringMovement(target) {
+            const findings = [];
+
+            for (const [, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'event_whenkeypressed') continue;
+                if (!block.next) continue;
+
+                const bodyOpcodes = [];
+                let currentId = block.next;
+                while (currentId) {
+                    const b = target.blocks[currentId];
+                    if (!b) break;
+                    bodyOpcodes.push(b.opcode);
+                    currentId = b.next;
+                }
+
+                if (bodyOpcodes.length === 0) continue;
+                if (!bodyOpcodes.every(op => CONSTANTS.MOTION_OPCODES.has(op))) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Stuttering Movement',
+                    description: 'This "when key pressed" script contains only motion blocks. The script runs once per keypress event, moving the sprite a single step and stopping — which causes stuttering. To move smoothly while a key is held, the check must be inside a loop.',
+                    fix: 'Use a "when green flag clicked → forever → if <key pressed?> → move" structure instead, so movement is checked every frame.',
+                });
+            }
+
+            return findings;
+        }
+
+        function checkPositionEquals(target) {
+            const findings = [];
+            const POSITION_OPCODES = new Set([
+                'motion_xposition',
+                'motion_yposition',
+                'motion_direction',
+            ]);
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'operator_equals') continue;
+
+                const op1Id = getInputBlockId(block, 'OPERAND1');
+                const op2Id = getInputBlockId(block, 'OPERAND2');
+
+                const hasPosition =
+                    (op1Id && subtreeContainsOpcode(op1Id, target.blocks, POSITION_OPCODES)) ||
+                    (op2Id && subtreeContainsOpcode(op2Id, target.blocks, POSITION_OPCODES));
+
+                if (!hasPosition) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Exact Position Comparison',
+                    description: 'An equality check (=) is used against a position or direction value. Sprite coordinates are floating-point and can skip over the target value, so the condition may never be true.',
+                    fix: 'Use a range check instead: e.g. "(x position) > (target − 2) and (x position) < (target + 2)" to detect when the sprite is near the target.',
+                    blockId: id,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkParameterOutOfScope(target) {
+            const findings = [];
+            const ARGUMENT_REPORTER_OPCODES = new Set([
+                'argument_reporter_string_number',
+                'argument_reporter_boolean',
+            ]);
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!ARGUMENT_REPORTER_OPCODES.has(block.opcode)) continue;
+                if (hasAncestorWithOpcode(id, target.blocks, new Set(['procedures_definition']))) continue;
+
+                const paramName = (block.fields['VALUE'] || block.fields['value'])?.[0] || 'parameter';
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'error',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Parameter Used Outside Block',
+                    description: `The "${paramName}" argument reporter is used outside a custom block definition. Custom block parameters only hold a value inside the "define" body — outside it, they return 0 or an empty string.`,
+                    fix: `Move this reporter inside the "define (custom block)" body, or use a variable to pass the value to code outside the custom block.`,
+                    blockId: id,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkMissingLoopSensing(target) {
+            const findings = [];
+            const SENSING_OPCODES = new Set([
+                'sensing_touchingobject',
+                'sensing_touchingcolor',
+                'sensing_coloristouchingcolor',
+                'sensing_keypressed',
+                'sensing_mousedown',
+            ]);
+            const IF_OPCODES = new Set(['control_if', 'control_if_else']);
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!IF_OPCODES.has(block.opcode)) continue;
+                const conditionId = getInputBlockId(block, 'CONDITION');
+                if (!conditionId) continue;
+                if (!subtreeContainsOpcode(conditionId, target.blocks, SENSING_OPCODES)) continue;
+                if (hasAncestorWithOpcode(id, target.blocks, CONSTANTS.LOOP_OPCODES)) continue;
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Sensing Check Outside Loop',
+                    description: 'This if-block uses a sensing condition (touching, key pressed, etc.) but is not inside a loop. The check runs only once, so events that happen later will be missed.',
+                    fix: 'Wrap the if-block in a "forever" loop so the condition is checked continuously.',
+                    blockId: id,
+                });
+            }
+            return findings;
+        }
+
+        function checkAlwaysHidden(target) {
+            if (target.isStage) return [];
+
+            let hasHide = false;
+            let hasShow = false;
+
+            for (const block of Object.values(target.blocks)) {
+                if (block.opcode === 'looks_hide') hasHide = true;
+                if (block.opcode === 'looks_show') hasShow = true;
+                if (hasHide && hasShow) return [];
+            }
+
+            if (!hasHide) return [];
+
+            return [{
+                dimension: 'correctness',
+                severity: 'warning',
+                source: 'rule-based',
+                sprite: target.name,
+                title: 'Sprite May Stay Hidden',
+                description: 'This sprite hides itself but never shows again, making it permanently invisible.',
+                fix: 'Add a "show" block where the sprite should become visible, or remove the "hide" block.',
+            }];
+        }
+
+        function checkCloneNoSelfDeletion(target) {
+            if (target.isStage) return [];
+
+            let hasCloneHat = false;
+            let hasSelfDelete = false;
+
+            for (const block of Object.values(target.blocks)) {
+                if (block.opcode === 'control_start_as_clone' && block.topLevel) hasCloneHat = true;
+                if (block.opcode === 'control_delete_this_clone') hasSelfDelete = true;
+                if (hasCloneHat && hasSelfDelete) return [];
+            }
+
+            if (!hasCloneHat) return [];
+
+            return [{
+                dimension: 'correctness',
+                severity: 'warning',
+                source: 'rule-based',
+                sprite: target.name,
+                title: 'Clone Never Deletes Itself',
+                description: 'This sprite runs code as a clone but never deletes itself, so clones build up until the project slows to a halt.',
+                fix: 'Add a "delete this clone" block when the clone has finished its work.',
+            }];
+        }
+
+        function checkForeverInsideLoop(target) {
+            const findings = [];
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'control_forever') continue;
+                if (!hasAncestorWithOpcode(id, target.blocks, CONSTANTS.LOOP_OPCODES)) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Forever Inside Loop',
+                    description: 'A "forever" block is nested inside another loop. The outer loop will never advance past the forever block because forever never exits, making subsequent iterations unreachable.',
+                    fix: 'Remove the outer loop, or replace the "forever" with a "repeat" or "repeat until" block so the inner loop can finish.',
+                    blockId: id,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkExpressionAsTouchable(target) {
+            const findings = [];
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'sensing_touchingobject') continue;
+                const input = block.inputs['TOUCHINGOBJECTMENU'];
+                if (!input) continue;
+                const ref = input[1];
+                if (typeof ref !== 'string') continue;
+                const referencedBlock = target.blocks[ref];
+                if (!referencedBlock || referencedBlock.shadow) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'error',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Dynamic Value in Touching Check',
+                    description: 'A variable or expression has been connected to the "touching [?]" sprite-name slot. Scratch requires a fixed sprite name chosen from the menu — a dynamic value is ignored and the block always returns false.',
+                    fix: 'Remove the reporter and select the target sprite from the menu. If you need to change which sprite is checked, use separate "touching [Sprite A]?" and "touching [Sprite B]?" blocks in an if/else.',
+                    blockId: id,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkComparingLiterals(target) {
+            const findings = [];
+            const COMPARISON_OPCODES = new Set(['operator_equals', 'operator_gt', 'operator_lt']);
+
+            const isLiteralInput = (block, inputName) => {
+                const input = block.inputs[inputName];
+                if (!input) return false;
+                const ref = input[1];
+                return Array.isArray(ref) && ref[1] !== null;
+            };
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!COMPARISON_OPCODES.has(block.opcode)) continue;
+                if (!isLiteralInput(block, 'OPERAND1')) continue;
+                if (!isLiteralInput(block, 'OPERAND2')) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Comparing Two Literals',
+                    description: 'Both sides of this comparison are fixed values, so the result is always the same (always true or always false). This is likely a mistake — one side should be a variable or reporter.',
+                    fix: 'Replace one of the literal values with the variable or sensor value you want to compare against.',
+                    blockId: id,
+                });
+            }
+
+            return findings;
+        }
+
+        // Cross-sprite checkers (take targets array)
+        function checkNoEntryPoint(targets) {
+            if (targets.length === 0) return [];
+
+            const hasFlag = targets.some((t) =>
+                Object.values(t.blocks).some(
+                    (b) => b.opcode === 'event_whenflagclicked' && b.topLevel && !b.shadow,
+                ),
+            );
+            if (hasFlag) return [];
+            const stage = targets.find((t) => t.isStage) || targets[0];
+            if (!stage) return [];
+            return [{
+                dimension: 'correctness',
+                severity: 'warning',
+                source: 'rule-based',
+                sprite: stage.name,
+                title: 'No Green Flag Script',
+                description: 'No sprite has a "when green flag clicked" script, so pressing the green flag starts nothing.',
+                fix: 'Add a "when green flag clicked" hat block to start your project.',
+            }];
+        }
+
+        function checkUnansweredAsk(targets) {
+            let hasAsk = false;
+            let hasAnswer = false;
+
+            for (const target of targets) {
+                for (const block of Object.values(target.blocks)) {
+                    if (block.opcode === 'sensing_askandwait') hasAsk = true;
+                    if (block.opcode === 'sensing_answer') hasAnswer = true;
+                }
+            }
+
+            if (!hasAsk || hasAnswer) return [];
+
+            const stage = targets.find((t) => t.isStage) || targets[0];
+            return [{
+                dimension: 'correctness',
+                severity: 'warning',
+                source: 'rule-based',
+                sprite: stage?.name || 'Stage',
+                title: 'Ask Answer Never Read',
+                description: 'A question is asked but the answer is never read, so whatever the user types is thrown away.',
+                fix: 'Use the "answer" reporter block after asking.',
+            }];
+        }
+
+        function checkClonesWithoutDeletion(targets) {
+            const findings = [];
+            const projectHasDeletion = targets.some((t) =>
+                Object.values(t.blocks).some((b) => b.opcode === 'control_delete_this_clone'),
+            );
+
+            for (const target of targets) {
+                const createsClone = Object.values(target.blocks).some(
+                    (b) => b.opcode === 'control_create_clone_of',
+                );
+                if (createsClone && !projectHasDeletion) {
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Clones Never Deleted',
+                        description: 'Clones pile up because nothing removes them, eventually slowing down or crashing the project.',
+                        fix: 'Add a "delete this clone" block inside the clone\'s script.',
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkLocalVariableScope(targets) {
+            const spriteTargets = targets.filter(t => !t.isStage);
+            if (spriteTargets.length < 2) return [];
+
+            const stageTarget = targets.find(t => t.isStage);
+            const globalVarNames = new Set(
+                Object.values(stageTarget?.variables || {}).map(([name]) => name.toLowerCase().trim()),
+            );
+
+            const SHARED_STATE_NAMES = ['score', 'lives', 'level', 'timer', 'points', 'health'];
+            const isSharedStateName = (name) => SHARED_STATE_NAMES.includes(name.toLowerCase().trim());
+
+            const findings = [];
+            for (const target of spriteTargets) {
+                for (const [, varNameTuple] of Object.entries(target.variables)) {
+                    const varName = varNameTuple[0];
+                    if (!isSharedStateName(varName)) continue;
+                    if (globalVarNames.has(varName.toLowerCase().trim())) continue;
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'info',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Local Variable "${varName}" May Need Global Scope`,
+                        description: `"${varName}" is a sprite-local variable on ${target.name}, but its name suggests it should be shared across all sprites. Other sprites cannot read or change a local variable.`,
+                        fix: `Delete this variable and recreate it with "For all sprites" selected, so every sprite can access it.`,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkMissingBackdropSwitch(targets) {
+            const SWITCH_OPCODES = new Set(['looks_switchbackdropto', 'looks_switchbackdroptoandwait']);
+
+            const getSentBackdrops = () => {
+                const sent = new Set();
+                for (const target of targets) {
+                    for (const [, block] of Object.entries(target.blocks)) {
+                        if (!SWITCH_OPCODES.has(block.opcode)) continue;
+                        const backdropInput = block.inputs['BACKDROP'];
+                        if (!backdropInput) continue;
+                        const ref = backdropInput[1];
+                        if (typeof ref !== 'string') continue;
+                        const shadowBlock = target.blocks[ref];
+                        if (!shadowBlock || !shadowBlock.shadow) continue;
+                        const field = shadowBlock.fields['BACKDROP'];
+                        if (field && typeof field[0] === 'string') {
+                            sent.add(field[0].toLowerCase().trim());
+                        }
+                    }
+                }
+                return sent;
+            };
+
+            const sentBackdrops = getSentBackdrops();
+            const findings = [];
+
+            for (const target of targets) {
+                for (const [id, block] of Object.entries(target.blocks)) {
+                    if (block.opcode !== 'event_whenbackdropswitchesto') continue;
+                    const field = block.fields['BACKDROP'];
+                    if (!field || typeof field[0] !== 'string') continue;
+                    const backdropName = field[0];
+                    if (sentBackdrops.has(backdropName.toLowerCase().trim())) continue;
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'error',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Backdrop Never Switched To',
+                        description: `This script triggers "when backdrop switches to ${backdropName}", but no script in the project ever switches to that backdrop. The handler will never run.`,
+                        fix: `Add a "switch backdrop to ${backdropName}" block in the appropriate script so this handler can trigger.`,
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkMissingCloneCall(targets) {
+            const clonedSprites = new Set();
+            for (const target of targets) {
+                for (const [, block] of Object.entries(target.blocks)) {
+                    if (block.opcode !== 'control_create_clone_of') continue;
+                    const input = block.inputs['CLONE_OPTION'];
+                    if (!input) continue;
+                    const ref = input[1];
+                    if (typeof ref !== 'string') continue;
+                    const menuBlock = target.blocks[ref];
+                    if (!menuBlock || !menuBlock.shadow) continue;
+                    const field = menuBlock.fields['CLONE_OPTION'];
+                    if (!field || typeof field[0] !== 'string') continue;
+                    const cloneTarget = field[0] === '_myself_' ? target.name : field[0];
+                    clonedSprites.add(cloneTarget);
+                }
+            }
+
+            const findings = [];
+            for (const target of targets) {
+                if (target.isStage) continue;
+                const hasCloneHandler = Object.values(target.blocks).some(
+                    b => b.opcode === 'control_start_as_clone',
+                );
+                if (!hasCloneHandler) continue;
+                if (clonedSprites.has(target.name)) continue;
+
+                findings.push({
+                    dimension: 'correctness',
+                    severity: 'error',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Clone Handler Never Triggered',
+                    description: `"${target.name}" has a "when I start as a clone" script, but no "create clone of ${target.name}" block exists anywhere in the project. The script will never run.`,
+                    fix: `Add a "create clone of ${target.name}" (or "create clone of myself" inside ${target.name}) block to the script that should spawn clones.`,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkMissingCloneInitialisation(targets) {
+            const spritesWithHandler = new Set(
+                targets
+                    .filter(t => !t.isStage && Object.values(t.blocks).some(b => b.opcode === 'control_start_as_clone'))
+                    .map(t => t.name),
+            );
+
+            const flagged = new Set();
+            const findings = [];
+
+            for (const target of targets) {
+                for (const [id, block] of Object.entries(target.blocks)) {
+                    if (block.opcode !== 'control_create_clone_of') continue;
+                    const input = block.inputs['CLONE_OPTION'];
+                    if (!input) continue;
+                    const ref = input[1];
+                    if (typeof ref !== 'string') continue;
+                    const menuBlock = target.blocks[ref];
+                    if (!menuBlock || !menuBlock.shadow) continue;
+                    const field = menuBlock.fields['CLONE_OPTION'];
+                    if (!field || typeof field[0] !== 'string') continue;
+                    const cloneTarget = field[0] === '_myself_' ? target.name : field[0];
+                    if (spritesWithHandler.has(cloneTarget)) continue;
+                    if (flagged.has(cloneTarget)) continue;
+                    flagged.add(cloneTarget);
+
+                    findings.push({
+                        dimension: 'correctness',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Clone Has No Initialisation',
+                        description: `A clone of "${cloneTarget}" is created, but "${cloneTarget}" has no "when I start as a clone" script. The clone will appear but do nothing.`,
+                        fix: `Add a "when I start as a clone" hat block to "${cloneTarget}" and write the behaviour each clone should perform (move, look, interact, etc.).`,
+                        blockId: id,
+                    });
+                }
+            }
+
+            return findings;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // PERFORMANCE CHECKERS
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        function checkNestingDepth(target) {
+            const findings = [];
+            const hatIds = getAllTopLevelHatIds(target.blocks);
+
+            const getRepeatCount = (block) => {
+                const timesInput = block.inputs['TIMES'];
+                if (!timesInput) return null;
+                const ref = timesInput[1];
+                if (Array.isArray(ref) && ref[0] === 4 && typeof ref[1] === 'string') {
+                    const n = parseInt(ref[1], 10);
+                    return isNaN(n) ? null : n;
+                }
+                return null;
+            };
+
+            const findNestedRepeatChain = (blockId) => {
+                const block = target.blocks[blockId];
+                if (!block || block.opcode !== 'control_repeat') return null;
+                const count = getRepeatCount(block);
+                if (count === null) return null;
+                const substackId = getInputBlockId(block, 'SUBSTACK');
+                if (!substackId) return [count];
+                const inner = findNestedRepeatChain(substackId);
+                if (inner === null) return null;
+                return [count, ...inner];
+            };
+
+            const dfs = (blockId, blocks, depth, maxDepth, visited) => {
+                if (visited.has(blockId)) return;
+                visited.add(blockId);
+                const block = blocks[blockId];
+                if (!block) return;
+
+                if (CONSTANTS.CONTROL_OPCODES.has(block.opcode)) {
+                    const newDepth = depth + 1;
+                    if (newDepth > maxDepth.value) maxDepth.value = newDepth;
+                    const substackId = getInputBlockId(block, 'SUBSTACK');
+                    if (substackId) dfs(substackId, blocks, newDepth, maxDepth, visited);
+                    const substack2Id = getInputBlockId(block, 'SUBSTACK2');
+                    if (substack2Id) dfs(substack2Id, blocks, newDepth, maxDepth, visited);
+                }
+
+                if (block.next) dfs(block.next, blocks, depth, maxDepth, visited);
+            };
+
+            for (const hatId of hatIds) {
+                const hat = target.blocks[hatId];
+                if (!hat?.next) continue;
+
+                const maxDepth = { value: 0 };
+                dfs(hat.next, target.blocks, 0, maxDepth, new Set());
+
+                if (maxDepth.value < CONSTANTS.NESTING_DEPTH_WARNING) continue;
+
+                const chain = findNestedRepeatChain(hat.next);
+                let title, description, fix;
+                if (chain && chain.length > 1) {
+                    const product = chain.reduce((a, b) => a * b, 1);
+                    title = `Deeply Nested Loops (${chain.join('×')})`;
+                    description = `These nested repeats execute ${product.toLocaleString()} times total and may cause lag.`;
+                    fix = `Reduce the iterations or refactor the logic.`;
+                } else {
+                    title = `Deep Nesting (Depth ${maxDepth.value})`;
+                    description = `Deeply nested control blocks are hard to read and debug.`;
+                    fix = `Split the logic into custom blocks.`;
+                }
+
+                findings.push({
+                    dimension: 'performance',
+                    severity: maxDepth.value >= CONSTANTS.NESTING_DEPTH_ERROR ? 'error' : 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title,
+                    description,
+                    fix,
+                    blockId: hatId,
+                });
+            }
+            return findings;
+        }
+
+        function checkPollingLoop(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode !== 'control_repeat_until') continue;
+                const substackId = getInputBlockId(block, 'SUBSTACK');
+                if (!substackId) {
+                    findings.push({
+                        dimension: 'performance',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: 'Busy-Wait Loop',
+                        description: 'A "repeat until" loop with no blocks inside busy-waits and may cause lag.',
+                        fix: 'Replace it with a "wait until" block.',
+                        blockId: id,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        function checkBroadcastInLoop(target) {
+            const findings = [];
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (!CONSTANTS.LOOP_OPCODES.has(block.opcode)) continue;
+                const substackId = getInputBlockId(block, 'SUBSTACK');
+                if (!substackId) continue;
+                const hasBroadcast = subtreeContainsOpcode(substackId, target.blocks, CONSTANTS.BROADCAST_SEND_OPCODES);
+                if (!hasBroadcast) continue;
+                const hasWait = subtreeContainsOpcode(substackId, target.blocks, new Set([CONSTANTS.WAIT_OPCODE]));
+                if (hasWait) continue;
+                findings.push({
+                    dimension: 'performance',
+                    severity: 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: 'Broadcast in Tight Loop',
+                    description: 'A broadcast fires inside a loop with no wait block, flooding the event queue every frame and causing lag.',
+                    fix: 'Add a "wait" block inside the loop, or move the broadcast outside of it.',
+                    blockId: id,
+                });
+            }
+            return findings;
+        }
+
+        function checkRedundantBroadcasts(targets) {
+            const sent = new Set();
+            const received = new Set();
+
+            const getBroadcastName = (block, blocks) => {
+                const menuId = getInputBlockId(block, 'BROADCAST_INPUT');
+                if (menuId) {
+                    const menuBlock = blocks[menuId];
+                    if (menuBlock?.opcode === 'event_broadcast_menu') {
+                        return menuBlock.fields['BROADCAST_OPTION']?.[0] || null;
+                    }
+                }
+                return null;
+            };
+
+            for (const target of targets) {
+                for (const block of Object.values(target.blocks)) {
+                    if (CONSTANTS.BROADCAST_SEND_OPCODES.has(block.opcode)) {
+                        const name = getBroadcastName(block, target.blocks);
+                        if (name) sent.add(name);
+                    }
+                    if (block.opcode === CONSTANTS.BROADCAST_RECEIVE_OPCODE) {
+                        const name = block.fields['BROADCAST_OPTION']?.[0];
+                        if (name) received.add(name);
+                    }
+                }
+            }
+
+            const findings = [];
+            const stage = targets.find((t) => t.isStage) || targets[0];
+            const spriteName = stage?.name || 'Stage';
+
+            for (const name of sent) {
+                if (!received.has(name)) {
+                    findings.push({
+                        dimension: 'performance',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: spriteName,
+                        title: `Unheard Broadcast "${name}"`,
+                        description: `Broadcast "${name}" is never received — no sprite has a matching "when I receive" script.`,
+                        fix: `Add a "when I receive ${name}" script or remove the send.`,
+                    });
+                }
+            }
+            for (const name of received) {
+                if (!sent.has(name)) {
+                    findings.push({
+                        dimension: 'performance',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: spriteName,
+                        title: `Unreceivable Broadcast "${name}"`,
+                        description: `This script listens for a broadcast that is never sent anywhere, so it will never run.`,
+                        fix: `Add a "broadcast ${name}" block or remove the receiver.`,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // MAINTAINABILITY CHECKERS
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        function checkScriptLength(target) {
+            const findings = [];
+            for (const hatId of getAllTopLevelHatIds(target.blocks)) {
+                const hat = target.blocks[hatId];
+                if (!hat?.next) continue;
+                const count = countBlocksInSubtree(hat.next, target.blocks);
+                if (count < CONSTANTS.SCRIPT_LENGTH_WARNING) continue;
+                findings.push({
+                    dimension: 'maintainability',
+                    severity: count >= CONSTANTS.SCRIPT_LENGTH_ERROR ? 'error' : 'warning',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: `Script Too Long (${count} Blocks)`,
+                    description: `Scripts this long are hard to read and maintain.`,
+                    fix: `Break it up using custom blocks.`,
+                    blockId: hatId,
+                });
+            }
+            return findings;
+        }
+
+        function checkNamingConventions(target, allTargets) {
+            const findings = [];
+
+            const getAllVarIdsInBlocks = () => {
+                const ids = new Set();
+                for (const t of allTargets) {
+                    for (const block of Object.values(t.blocks)) {
+                        const varField = block.fields['VARIABLE'];
+                        if (varField?.[1]) ids.add(varField[1]);
+                    }
+                }
+                return ids;
+            };
+
+            const usedVarIds = getAllVarIdsInBlocks();
+
+            for (const [varId, varNameTuple] of Object.entries(target.variables)) {
+                const varName = varNameTuple[0];
+                if (CONSTANTS.POOR_VARIABLE_NAMES.has(varName.toLowerCase())) {
+                    findings.push({
+                        dimension: 'maintainability',
+                        severity: 'warning',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Generic Variable Name "${varName}"`,
+                        description: `"${varName}" is too generic to explain what it stores.`,
+                        fix: `Rename it to something descriptive that reflects its purpose.`,
+                    });
+                } else if (CONSTANTS.SINGLE_LETTER_BAD_REGEX.test(varName)) {
+                    findings.push({
+                        dimension: 'maintainability',
+                        severity: 'info',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Single-Letter Variable "${varName}"`,
+                        description: `A single-letter name doesn't explain what this value represents.`,
+                        fix: `Use a more descriptive name.`,
+                    });
+                }
+
+                if (!usedVarIds.has(varId)) {
+                    findings.push({
+                        dimension: 'maintainability',
+                        severity: 'info',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Unused Variable "${varName}"`,
+                        description: `Defined but never used in any block.`,
+                        fix: `Remove it or start using it.`,
+                    });
+                }
+            }
+
+            if (!target.isStage && CONSTANTS.DEFAULT_SPRITE_NAME_REGEX.test(target.name)) {
+                findings.push({
+                    dimension: 'maintainability',
+                    severity: 'info',
+                    source: 'rule-based',
+                    sprite: target.name,
+                    title: `Default Sprite Name "${target.name}"`,
+                    description: `"${target.name}" is a default name that doesn't describe this sprite's role.`,
+                    fix: `Give it a descriptive name that matches what it does.`,
+                });
+            }
+
+            return findings;
+        }
+
+        function checkDeadCustomBlocks(target) {
+            const findings = [];
+            const calledProcCodes = new Set();
+            const definedProcCodes = new Set();
+
+            for (const block of Object.values(target.blocks)) {
+                if (block.opcode === 'procedures_call' && block.mutation?.['proccode']) {
+                    calledProcCodes.add(block.mutation['proccode']);
+                }
+                if (block.opcode === 'procedures_definition' && block.mutation?.['proccode']) {
+                    definedProcCodes.add(block.mutation['proccode']);
+                }
+            }
+
+            for (const [id, block] of Object.entries(target.blocks)) {
+                if (block.opcode === 'procedures_definition' && block.mutation?.['proccode']) {
+                    if (!calledProcCodes.has(block.mutation['proccode'])) {
+                        findings.push({
+                            dimension: 'maintainability',
+                            severity: 'info',
+                            source: 'rule-based',
+                            sprite: target.name,
+                            title: `Unused Custom Block`,
+                            description: `"${block.mutation['proccode']}" is defined but never called anywhere in this sprite.`,
+                            fix: `Remove the custom block or add a call to it where needed.`,
+                            blockId: id,
+                        });
+                    }
+                }
+                if (block.opcode === 'procedures_call' && block.mutation?.['proccode']) {
+                    if (!definedProcCodes.has(block.mutation['proccode'])) {
+                        findings.push({
+                            dimension: 'correctness',
+                            severity: 'error',
+                            source: 'rule-based',
+                            sprite: target.name,
+                            title: `Missing Custom Block Definition`,
+                            description: `"${block.mutation['proccode']}" is called but has no "define" block in this sprite. The call will do nothing.`,
+                            fix: `Add a "define ${block.mutation['proccode']}" block and implement its body, or remove the call.`,
+                            blockId: id,
+                        });
+                    }
+                }
+            }
+            return findings;
+        }
+
+        function checkGodSprite(target) {
+            if (target.isStage) return [];
+            const count = getAllTopLevelHatIds(target.blocks).length;
+            if (count < CONSTANTS.GOD_SPRITE_SCRIPT_WARNING) return [];
+            return [{
+                dimension: 'maintainability',
+                severity: count >= CONSTANTS.GOD_SPRITE_SCRIPT_ERROR ? 'error' : 'warning',
+                source: 'rule-based',
+                sprite: target.name,
+                title: `God Sprite (${count} Scripts)`,
+                description: `This sprite has too many scripts and is doing too much.`,
+                fix: `Split its responsibilities across multiple sprites or use custom blocks to organise the logic.`,
+            }];
+        }
+
+        function checkMagicNumbers(target) {
+            const counts = new Map();
+
+            for (const block of Object.values(target.blocks)) {
+                for (const input of Object.values(block.inputs)) {
+                    const ref = input[1];
+                    if (Array.isArray(ref) && ref[0] === 4 && typeof ref[1] === 'string') {
+                        const n = parseFloat(ref[1]);
+                        if (!isNaN(n)) counts.set(n, (counts.get(n) || 0) + 1);
+                    }
+                }
+            }
+
+            const findings = [];
+            for (const [num, count] of counts) {
+                if (count >= CONSTANTS.MAGIC_NUMBER_MIN_OCCURRENCES && !CONSTANTS.MAGIC_NUMBER_EXEMPT.has(num)) {
+                    findings.push({
+                        dimension: 'maintainability',
+                        severity: 'info',
+                        source: 'rule-based',
+                        sprite: target.name,
+                        title: `Magic Number: ${num}`,
+                        description: `The number ${num} appears ${count} times as a raw value with no name to explain what it represents.`,
+                        fix: `Store it in a named variable so its purpose is obvious and updates stay consistent.`,
+                    });
+                }
+            }
+            return findings;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────────────
+        // MAIN ANALYSIS RUNNER
+        // ───────────────────────────────────────────────────────────────────────────────────
+
+        window.runRuleBasedAnalysis = function(project) {
+            const findings = [];
+            const { targets } = project;
+
+            // Per-target checkers
+            for (const target of targets) {
+                findings.push(
+                    ...checkUnreachableScripts(target),
+                    ...checkEmptyScripts(target),
+                    ...checkInfiniteLoops(target),
+                    ...checkUninitialisedVariables(target),
+                    ...checkWriteOnlyVariables(target),
+                    ...checkDuplicateHatTriggers(target),
+                    ...checkCloneBomb(target),
+                    ...checkCoordinateBounds(target),
+                    ...checkZeroDurationSay(target),
+                    ...checkNestingDepth(target),
+                    ...checkPollingLoop(target),
+                    ...checkScriptLength(target),
+                    ...checkNamingConventions(target, targets),
+                    ...checkDeadCustomBlocks(target),
+                    ...checkGodSprite(target),
+                    ...checkMagicNumbers(target),
+                    ...checkAlwaysHidden(target),
+                    ...checkCloneNoSelfDeletion(target),
+                    ...checkBroadcastInLoop(target),
+                    ...checkMissingLoopSensing(target),
+                    ...checkStutteringMovement(target),
+                    ...checkPositionEquals(target),
+                    ...checkComparingLiterals(target),
+                    ...checkForeverInsideLoop(target),
+                    ...checkParameterOutOfScope(target),
+                    ...checkExpressionAsTouchable(target),
+                );
+            }
+
+            // Cross-target checkers
+            findings.push(
+                ...checkRedundantBroadcasts(targets),
+                ...checkClonesWithoutDeletion(targets),
+                ...checkNoEntryPoint(targets),
+                ...checkUnansweredAsk(targets),
+                ...checkLocalVariableScope(targets),
+                ...checkMissingBackdropSwitch(targets),
+                ...checkMissingCloneCall(targets),
+                ...checkMissingCloneInitialisation(targets),
+            );
+
+            // Sort by severity
+            const SEVERITY_ORDER = { error: 0, warning: 1, info: 2 };
+            return findings.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+        };
+    </script>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>ScratchSense</h1>
+            <p>Gold Standard Annotation Tool</p>
+            <div class="badge">Rule-Based Analysis</div>
+        </div>
+
+        <!-- Error Message Container -->
+        <div id="errorMessage" class="error-message">
+            <span class="error-icon">⚠️</span>
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Session History -->
+        <div id="sessionHistory" class="session-history">
+            <h3>Previous Files (This Session)</h3>
+            <div class="session-history-list" id="historyList"></div>
+        </div>
+
+        <!-- File Input Region -->
+        <div id="fileInputRegion" class="file-input-region">
+            <div class="dropzone" id="dropzone">
+                <div class="dropzone-icon">📁</div>
+                <h2>Select a Scratch Project</h2>
+                <p>Drag and drop a .sb3 file here, or click to browse</p>
+                <button class="browse-button">Choose File</button>
+            </div>
+
+            <div id="fileSelected" class="file-selected">
+                <div class="file-info">
+                    <div class="file-info-name" id="fileName"></div>
+                    <div class="file-info-size" id="fileSize"></div>
+                </div>
+                <div class="button-group">
+                    <button class="analyse-button" id="analyseButton">Analyse</button>
+                    <button class="clear-button" id="clearButton">Clear</button>
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <div class="loading-text">Processing file...</div>
+            </div>
+
+            <input type="file" id="fileInput" class="file-input" accept=".sb3">
+        </div>
+
+        <!-- Score Summary -->
+        <div id="scoreSummary" class="score-summary">
+            <div class="metric-cards" id="metricCards"></div>
+            <div id="stackedBar"></div>
+        </div>
+
+        <!-- Findings Section -->
+        <div id="findingsSection" class="findings-section">
+            <div class="findings-header">
+                <h2>Code Quality Findings</h2>
+                <div class="filter-buttons" id="filterButtons"></div>
+            </div>
+            <table class="findings-table" id="findingsTable">
+                <thead>
+                    <tr>
+                        <th>Sprite</th>
+                        <th>Dimension</th>
+                        <th>Severity</th>
+                        <th>Checker</th>
+                        <th>Description</th>
+                        <th>Fix</th>
+                    </tr>
+                </thead>
+                <tbody id="findingsBody"></tbody>
+            </table>
+            <div id="paginationInfo" class="pagination-info"></div>
+        </div>
+
+        <!-- Export Section -->
+        <div id="exportSection" class="export-section">
+            <h3>Export Results</h3>
+            <div class="export-buttons">
+                <button class="export-button primary" id="copyJsonButton">📋 Copy JSON</button>
+                <span class="copy-feedback" id="copyFeedback">Copied to clipboard!</span>
+                <button class="export-button" id="downloadCsvButton">⬇️ Download CSV</button>
+            </div>
+        </div>
+
+        <!-- Analyse Another File Button -->
+        <div id="actionButtons" class="action-buttons" style="display: none;">
+            <button class="another-file-button" id="anotherFileButton">Analyse Another File</button>
+        </div>
+
+        <!-- Help Section -->
+        <div class="help-section">
+            <div class="help-toggle" id="helpToggle">
+                <span>❓ How to use this tool</span>
+                <span class="help-toggle-icon">▼</span>
+            </div>
+            <div class="help-content" id="helpContent">
+                <h4>What does this tool do?</h4>
+                <p>
+                    This tool runs the ScratchSense rule-based checker suite against a Scratch project file (.sb3).
+                    It does NOT run the LLM analysis layer — LLM findings are excluded from this automated annotation.
+                </p>
+
+                <h4>For the technical body study:</h4>
+                <ul>
+                    <li>Run this tool against each of the 20–30 corpus projects before running ScratchSense interactively</li>
+                    <li>This establishes the gold standard baseline for comparison with interactive results</li>
+                    <li>The score summary cards provide the numbers that go into Table 6.1 (body study) and Table 6.3 (user study)</li>
+                </ul>
+
+                <h4>For the user study:</h4>
+                <ul>
+                    <li>Run this tool against each participant's saved .sb3 file (both tool-condition and control-condition)</li>
+                    <li>This produces paired quality scores for analysis</li>
+                    <li>Use the CSV export for the Appendix D annotation spreadsheet</li>
+                </ul>
+
+                <h4>Export formats:</h4>
+                <ul>
+                    <li><strong>Copy JSON:</strong> Copies the complete findings array as formatted JSON for analysis or integration</li>
+                    <li><strong>Download CSV:</strong> Produces one row per finding instance with columns: file, sprite, dimension, checker, severity, description. This is the format needed for the Appendix D annotation spreadsheet</li>
+                </ul>
+
+                <h4>Checkers included:</h4>
+                <p>
+                    The rule-based analysis runs 28 checker modules covering:
+                </p>
+                <ul>
+                    <li><strong>Correctness:</strong> Script structure, variable initialization, event handling, cloning logic</li>
+                    <li><strong>Performance:</strong> Nesting depth, polling loops, broadcast optimization</li>
+                    <li><strong>Maintainability:</strong> Script length, naming conventions, dead blocks, code smell patterns</li>
+                </ul>
+
+                <h4>Empty results:</h4>
+                <p>
+                    If a project has no findings, the tool shows a "No issues detected" banner. This is valid output —
+                    not all projects violate any rules.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // STATE MANAGEMENT
+        // ═══════════════════════════════════════════════════════════
+
+        const state = {
+            currentFile: null,
+            currentFindings: null,
+            sessionHistory: [],
+            activeFilter: null,
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // DOM ELEMENTS
+        // ═══════════════════════════════════════════════════════════
+
+        const elements = {
+            dropzone: document.getElementById('dropzone'),
+            fileInput: document.getElementById('fileInput'),
+            fileSelected: document.getElementById('fileSelected'),
+            fileName: document.getElementById('fileName'),
+            fileSize: document.getElementById('fileSize'),
+            analyseButton: document.getElementById('analyseButton'),
+            clearButton: document.getElementById('clearButton'),
+            loadingIndicator: document.getElementById('loadingIndicator'),
+            errorMessage: document.getElementById('errorMessage'),
+            errorText: document.getElementById('errorText'),
+            scoreSummary: document.getElementById('scoreSummary'),
+            metricCards: document.getElementById('metricCards'),
+            stackedBar: document.getElementById('stackedBar'),
+            findingsSection: document.getElementById('findingsSection'),
+            filterButtons: document.getElementById('filterButtons'),
+            findingsTable: document.getElementById('findingsTable'),
+            findingsBody: document.getElementById('findingsBody'),
+            paginationInfo: document.getElementById('paginationInfo'),
+            exportSection: document.getElementById('exportSection'),
+            copyJsonButton: document.getElementById('copyJsonButton'),
+            copyFeedback: document.getElementById('copyFeedback'),
+            downloadCsvButton: document.getElementById('downloadCsvButton'),
+            actionButtons: document.getElementById('actionButtons'),
+            anotherFileButton: document.getElementById('anotherFileButton'),
+            fileInputRegion: document.getElementById('fileInputRegion'),
+            sessionHistory: document.getElementById('sessionHistory'),
+            historyList: document.getElementById('historyList'),
+            helpToggle: document.getElementById('helpToggle'),
+            helpContent: document.getElementById('helpContent'),
+            helpIcon: document.querySelector('.help-toggle-icon'),
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // FILE HANDLING
+        // ═══════════════════════════════════════════════════════════
+
+        // Dropzone events
+        elements.dropzone.addEventListener('click', () => {
+            elements.fileInput.click();
+        });
+
+        elements.dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.dropzone.classList.add('dragover');
+        });
+
+        elements.dropzone.addEventListener('dragleave', () => {
+            elements.dropzone.classList.remove('dragover');
+        });
+
+        elements.dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.dropzone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        elements.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        elements.analyseButton.addEventListener('click', analyseFile);
+        elements.clearButton.addEventListener('click', clearFile);
+        elements.anotherFileButton.addEventListener('click', resetToFileInput);
+
+        elements.helpToggle.addEventListener('click', () => {
+            elements.helpContent.classList.toggle('show');
+            elements.helpIcon.classList.toggle('open');
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.endsWith('.sb3')) {
+                showError('Please select a valid .sb3 file');
+                return;
+            }
+
+            state.currentFile = file;
+            elements.fileName.textContent = file.name;
+            elements.fileSize.textContent = `${(file.size / 1024).toFixed(2)} KB`;
+            elements.fileSelected.classList.add('show');
+            hideError();
+        }
+
+        function clearFile() {
+            state.currentFile = null;
+            elements.fileInput.value = '';
+            elements.fileSelected.classList.remove('show');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ANALYSIS
+        // ═══════════════════════════════════════════════════════════
+
+        async function analyseFile() {
+            if (!state.currentFile) return;
+
+            elements.analyseButton.disabled = true;
+            elements.loadingIndicator.classList.add('show');
+            hideError();
+
+            try {
+                // Unzip the file
+                const arrayBuffer = await state.currentFile.arrayBuffer();
+                const zip = await JSZip.loadAsync(arrayBuffer);
+
+                // Extract project.json
+                if (!zip.file('project.json')) {
+                    throw new Error('project.json not found in the .sb3 file. This does not appear to be a valid Scratch project.');
+                }
+
+                const projectJsonText = await zip.file('project.json').async('text');
+                let project;
+
+                try {
+                    project = JSON.parse(projectJsonText);
+                } catch (e) {
+                    throw new Error('project.json is not valid JSON. The file may be corrupted.');
+                }
+
+                // Validate project structure
+                if (!project.targets || !Array.isArray(project.targets)) {
+                    throw new Error('Invalid project structure: missing or invalid targets array.');
+                }
+
+                // Run analysis
+                if (typeof window.runRuleBasedAnalysis !== 'function') {
+                    throw new Error(
+                        'runRuleBasedAnalysis is not available. Did you build @scratch/scratch-quality-panel? ' +
+                        'Run: npm run build --workspace=packages/scratch-quality-panel'
+                    );
+                }
+
+                let findings;
+                try {
+                    findings = window.runRuleBasedAnalysis(project);
+                } catch (e) {
+                    throw new Error(`Analysis failed: ${e.message}`);
+                }
+
+                // Store and display
+                state.currentFindings = findings;
+                displayResults(findings);
+
+                // Add to session history
+                addToHistory({
+                    name: state.currentFile.name,
+                    findingCount: findings.length,
+                });
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                elements.analyseButton.disabled = false;
+                elements.loadingIndicator.classList.remove('show');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // RESULTS DISPLAY
+        // ═══════════════════════════════════════════════════════════
+
+        function displayResults(findings) {
+            // Hide file input, show results
+            elements.fileInputRegion.classList.add('hidden');
+            elements.scoreSummary.classList.add('show');
+            elements.findingsSection.classList.add('show');
+            elements.exportSection.classList.add('show');
+            elements.actionButtons.style.display = 'block';
+
+            // Display score summary
+            displayScoreSummary(findings);
+
+            // Reset filter
+            state.activeFilter = null;
+
+            // Display findings
+            displayFindings(findings);
+        }
+
+        function displayScoreSummary(findings) {
+            const totalCount = findings.length;
+            const correctnessCount = findings.filter(f => f.dimension === 'correctness').length;
+            const performanceCount = findings.filter(f => f.dimension === 'performance').length;
+            const maintainabilityCount = findings.filter(f => f.dimension === 'maintainability').length;
+
+            // Metric cards
+            elements.metricCards.innerHTML = `
+                <div class="metric-card total">
+                    <div class="metric-label">Total Issues</div>
+                    <div class="metric-value">${totalCount}</div>
+                </div>
+                <div class="metric-card correctness">
+                    <div class="metric-label">Correctness</div>
+                    <div class="metric-value">${correctnessCount}</div>
+                </div>
+                <div class="metric-card performance">
+                    <div class="metric-label">Performance</div>
+                    <div class="metric-value">${performanceCount}</div>
+                </div>
+                <div class="metric-card maintainability">
+                    <div class="metric-label">Maintainability</div>
+                    <div class="metric-value">${maintainabilityCount}</div>
+                </div>
+            `;
+
+            // Stacked bar or no-issues banner
+            if (totalCount === 0) {
+                elements.stackedBar.innerHTML = '<div class="no-issues-banner">✓ No issues detected</div>';
+            } else {
+                const correctnessPercent = (correctnessCount / totalCount) * 100;
+                const performancePercent = (performanceCount / totalCount) * 100;
+                const maintainabilityPercent = (maintainabilityCount / totalCount) * 100;
+
+                elements.stackedBar.innerHTML = `
+                    <div class="stacked-segment segment-correctness" style="width: ${correctnessPercent}%"></div>
+                    <div class="stacked-segment segment-performance" style="width: ${performancePercent}%"></div>
+                    <div class="stacked-segment segment-maintainability" style="width: ${maintainabilityPercent}%"></div>
+                `;
+            }
+        }
+
+        function displayFindings(findings) {
+            // Filter buttons
+            const dimensionCounts = {
+                correctness: findings.filter(f => f.dimension === 'correctness').length,
+                performance: findings.filter(f => f.dimension === 'performance').length,
+                maintainability: findings.filter(f => f.dimension === 'maintainability').length,
+            };
+
+            elements.filterButtons.innerHTML = `
+                <button class="filter-button active" data-filter="all">
+                    All <span class="filter-count">${findings.length}</span>
+                </button>
+                <button class="filter-button correctness" data-filter="correctness">
+                    Correctness <span class="filter-count">${dimensionCounts.correctness}</span>
+                </button>
+                <button class="filter-button performance" data-filter="performance">
+                    Performance <span class="filter-count">${dimensionCounts.performance}</span>
+                </button>
+                <button class="filter-button maintainability" data-filter="maintainability">
+                    Maintainability <span class="filter-count">${dimensionCounts.maintainability}</span>
+                </button>
+            `;
+
+            // Filter button listeners
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.activeFilter = btn.dataset.filter === 'all' ? null : btn.dataset.filter;
+                    renderFindingsTable(findings);
+                });
+            });
+
+            // Render table
+            renderFindingsTable(findings);
+        }
+
+        function renderFindingsTable(findings) {
+            const filtered = state.activeFilter
+                ? findings.filter(f => f.dimension === state.activeFilter)
+                : findings;
+
+            if (filtered.length === 0) {
+                elements.findingsBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center;">
+                            <div class="no-findings">
+                                <div class="no-findings-icon">✓</div>
+                                <div class="no-findings-text">No findings in this category</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                elements.paginationInfo.textContent = '';
+                return;
+            }
+
+            const ROWS_PER_PAGE = 50;
+            const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+            const visibleRows = Math.min(filtered.length, ROWS_PER_PAGE);
+
+            elements.paginationInfo.textContent = filtered.length > ROWS_PER_PAGE
+                ? `Showing ${visibleRows} of ${filtered.length} findings`
+                : `Showing all ${filtered.length} finding${filtered.length !== 1 ? 's' : ''}`;
+
+            // Render only first page (pagination is implicit via CSS/DOM)
+            elements.findingsBody.innerHTML = filtered.slice(0, visibleRows).map(finding => {
+                const checkerName = finding.description
+                    .replace(/\s+/g, '-')
+                    .toLowerCase()
+                    .slice(0, 30);
+
+                return `
+                    <tr class="${finding.severity}">
+                        <td><strong>${escapeHtml(finding.sprite)}</strong></td>
+                        <td><span class="badge ${finding.dimension}">${finding.dimension}</span></td>
+                        <td><span class="badge ${finding.severity}">${finding.severity}</span></td>
+                        <td><span class="checker-name">${checkerName}</span></td>
+                        <td>${escapeHtml(finding.description)}</td>
+                        <td>${escapeHtml(finding.fix)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // EXPORT
+        // ═══════════════════════════════════════════════════════════
+
+        elements.copyJsonButton.addEventListener('click', () => {
+            if (!state.currentFindings) return;
+
+            const json = JSON.stringify(state.currentFindings, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                elements.copyFeedback.classList.add('show');
+                setTimeout(() => {
+                    elements.copyFeedback.classList.remove('show');
+                }, 2000);
+            });
+        });
+
+        elements.downloadCsvButton.addEventListener('click', () => {
+            if (!state.currentFindings) return;
+
+            const csv = generateCsv(state.currentFindings);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const baseName = state.currentFile.name.replace('.sb3', '');
+            a.href = url;
+            a.download = `${baseName}_annotation.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        function generateCsv(findings) {
+            const headers = ['file', 'sprite', 'dimension', 'checker', 'severity', 'description'];
+            const rows = findings.map(f => [
+                state.currentFile.name,
+                f.sprite,
+                f.dimension,
+                f.description.replace(/\s+/g, '-').toLowerCase().slice(0, 30),
+                f.severity,
+                `"${f.description.replace(/"/g, '""')}"`,
+            ]);
+
+            return [headers, ...rows]
+                .map(row => row.join(','))
+                .join('\n');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // SESSION HISTORY
+        // ═══════════════════════════════════════════════════════════
+
+        function addToHistory(item) {
+            state.sessionHistory.push(item);
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            if (state.sessionHistory.length === 0) {
+                elements.sessionHistory.classList.remove('show');
+                return;
+            }
+
+            elements.sessionHistory.classList.add('show');
+            elements.historyList.innerHTML = state.sessionHistory.map((item, idx) => `
+                <div class="history-item" onclick="replayHistory(${idx})">
+                    <span class="history-item-name">${escapeHtml(item.name)}</span>
+                    <span class="history-item-count">${item.findingCount} issue${item.findingCount !== 1 ? 's' : ''}</span>
+                </div>
+            `).join('');
+        }
+
+        window.replayHistory = function(idx) {
+            // For now, just show a message. In a full implementation, we'd store and replay full results.
+            alert('History replay not yet implemented. Please re-analyse the file.');
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // NAVIGATION
+        // ═══════════════════════════════════════════════════════════
+
+        function resetToFileInput() {
+            elements.fileInputRegion.classList.remove('hidden');
+            elements.scoreSummary.classList.remove('show');
+            elements.findingsSection.classList.remove('show');
+            elements.exportSection.classList.remove('show');
+            elements.actionButtons.style.display = 'none';
+
+            clearFile();
+            state.currentFindings = null;
+            hideError();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ERROR HANDLING & UTILITIES
+        // ═══════════════════════════════════════════════════════════
+
+        function showError(message) {
+            elements.errorText.textContent = message;
+            elements.errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            elements.errorMessage.classList.remove('show');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
